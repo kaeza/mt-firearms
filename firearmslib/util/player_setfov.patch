@@ -1,0 +1,367 @@
+From 080e370a92aef1750e889be9ee95d1bd16b7b0ff Mon Sep 17 00:00:00 2001
+Message-Id: <080e370a92aef1750e889be9ee95d1bd16b7b0ff.1381625148.git.kaeza@users.sf.net>
+From: kaeza <kaeza@users.sf.net>
+Date: Sat, 12 Oct 2013 21:46:53 -0200
+Subject: [PATCH] Allow changing per-player FOV from Lua.
+
+---
+ builtin/features.lua            |    1 +
+ src/camera.cpp                  |    5 +++++
+ src/client.cpp                  |   14 ++++++++++++++
+ src/client.h                    |    6 +++++-
+ src/clientserver.h              |    7 +++++++
+ src/content_sao.cpp             |   11 +++++++++++
+ src/content_sao.h               |    4 ++++
+ src/game.cpp                    |    4 ++++
+ src/player.cpp                  |    1 +
+ src/player.h                    |   11 +++++++++++
+ src/script/lua_api/l_object.cpp |   29 +++++++++++++++++++++++++++++
+ src/script/lua_api/l_object.h   |    6 ++++++
+ src/server.cpp                  |   23 +++++++++++++++++++++++
+ src/server.h                    |    2 ++
+ 14 files changed, 123 insertions(+), 1 deletion(-)
+
+diff --git a/builtin/features.lua b/builtin/features.lua
+index 9d00cfd..8ef1824 100644
+--- a/builtin/features.lua
++++ b/builtin/features.lua
+@@ -6,6 +6,7 @@ minetest.features = {
+ 	chat_send_player_param3 = true,
+ 	get_all_craft_recipes_works = true,
+ 	use_texture_alpha = true,
++	player_set_fov = true,
+ }
+ 
+ function minetest.has_feature(arg)
+diff --git a/src/camera.cpp b/src/camera.cpp
+index 937ba38..953df48 100644
+--- a/src/camera.cpp
++++ b/src/camera.cpp
+@@ -356,6 +356,11 @@ void Camera::update(LocalPlayer* player, f32 frametime, f32 busytime,
+ 
+ 	// Get FOV setting
+ 	f32 fov_degrees = g_settings->getFloat("fov");
++	f32 fov_player = player->getFOV();
++	if (fov_player > 0)
++		fov_degrees = fov_player;
++	else
++		fov_degrees = (fov_degrees / 100) * (-fov_player);
+ 	fov_degrees = MYMAX(fov_degrees, 10.0);
+ 	fov_degrees = MYMIN(fov_degrees, 170.0);
+ 
+diff --git a/src/client.cpp b/src/client.cpp
+index 98c9af9..77d108e 100644
+--- a/src/client.cpp
++++ b/src/client.cpp
+@@ -2181,6 +2181,20 @@ void Client::ProcessData(u8 *data, u32 datasize, u16 sender_peer_id)
+ 			((LocalPlayer *) player)->hotbar_selected_image = value;
+ 		}
+ 	}
++	else if(command == TOCLIENT_SETFOV)
++	{	
++		std::string sdata;
++
++		std::string datastring((char *)&data[2], datasize - 2);
++		std::istringstream is(datastring, std::ios_base::binary);
++
++		f32 fov  = readF1000(is);
++
++		ClientEvent event;
++		event.type = CE_PLAYER_SETFOV;
++		event.setfov.fov        = fov;
++		m_client_event_queue.push_back(event);
++	}
+ 	else
+ 	{
+ 		infostream<<"Client: Ignoring unknown command "
+diff --git a/src/client.h b/src/client.h
+index 9f5eb83..4d30544 100644
+--- a/src/client.h
++++ b/src/client.h
+@@ -163,7 +163,8 @@ enum ClientEventType
+ 	CE_DELETE_PARTICLESPAWNER,
+ 	CE_HUDADD,
+ 	CE_HUDRM,
+-	CE_HUDCHANGE
++	CE_HUDCHANGE,
++	CE_PLAYER_SETFOV
+ };
+ 
+ struct ClientEvent
+@@ -243,6 +244,9 @@ struct ClientEvent
+ 			std::string *sdata;
+ 			u32 data;
+ 		} hudchange;
++		struct{
++			f32 fov;
++		} setfov;
+ 	};
+ };
+ 
+diff --git a/src/clientserver.h b/src/clientserver.h
+index 67a4846..ae402bd 100644
+--- a/src/clientserver.h
++++ b/src/clientserver.h
+@@ -100,6 +100,8 @@
+ 		version, heat and humidity transfer in MapBock
+ 		automatic_face_movement_dir and automatic_face_movement_dir_offset
+ 			added to object properties
++	PROTOCOL_VERSION 22:
++		TOCLIENT_SETFOV
+ */
+ 
+ #define LATEST_PROTOCOL_VERSION 21
+@@ -499,6 +501,11 @@ enum ToClientCommand
+ 		u16 command
+ 		u16 breath
+ 	*/
++
++	TOCLIENT_SETFOV = 0x4f,
++	/*
++		f32 fov
++	*/
+ };
+ 
+ enum ToServerCommand
+diff --git a/src/content_sao.cpp b/src/content_sao.cpp
+index 85ab8d3..985179a 100644
+--- a/src/content_sao.cpp
++++ b/src/content_sao.cpp
+@@ -372,6 +372,7 @@ ServerActiveObject* createItemSAO(ServerEnvironment *env, v3f pos,
+ 	m_velocity(0,0,0),
+ 	m_acceleration(0,0,0),
+ 	m_yaw(0),
++	m_fov(72),
+ 	m_properties_sent(true),
+ 	m_last_sent_yaw(0),
+ 	m_last_sent_position(0,0,0),
+@@ -849,6 +850,16 @@ float LuaEntitySAO::getYaw()
+ 	return m_yaw;
+ }
+ 
++void LuaEntitySAO::setFOV(f32 fov)
++{
++	m_fov = fov;
++}
++
++f32 LuaEntitySAO::getFOV()
++{
++	return m_fov;
++}
++
+ void LuaEntitySAO::setTextureMod(const std::string &mod)
+ {
+ 	std::string str = gob_cmd_set_texture_mod(mod);
+diff --git a/src/content_sao.h b/src/content_sao.h
+index 6b97cb1..e5dc877 100644
+--- a/src/content_sao.h
++++ b/src/content_sao.h
+@@ -74,6 +74,8 @@ class LuaEntitySAO : public ServerActiveObject
+ 	v3f getAcceleration();
+ 	void setYaw(float yaw);
+ 	float getYaw();
++	void setFOV(f32 fov);
++	f32 getFOV();
+ 	void setTextureMod(const std::string &mod);
+ 	void setSprite(v2s16 p, int num_frames, float framelength,
+ 			bool select_horiz_by_yawpitch);
+@@ -93,6 +95,7 @@ class LuaEntitySAO : public ServerActiveObject
+ 	v3f m_velocity;
+ 	v3f m_acceleration;
+ 	float m_yaw;
++	f32 m_fov;
+ 	ItemGroupList m_armor_groups;
+ 	
+ 	bool m_properties_sent;
+@@ -181,6 +184,7 @@ class PlayerSAO : public ServerActiveObject
+ 	void moveTo(v3f pos, bool continuous);
+ 	void setYaw(float);
+ 	void setPitch(float);
++	void setFOV(f32);
+ 
+ 	/*
+ 		Interaction interface
+diff --git a/src/game.cpp b/src/game.cpp
+index 71a578a..57109dd 100644
+--- a/src/game.cpp
++++ b/src/game.cpp
+@@ -2414,6 +2414,10 @@ void the_game(
+ 					delete event.hudchange.v2fdata;
+ 					delete event.hudchange.sdata;
+ 				}
++				else if (event.type == CE_PLAYER_SETFOV)
++				{
++					player->setFOV(event.setfov.fov);
++				}
+ 			}
+ 		}
+ 		
+diff --git a/src/player.cpp b/src/player.cpp
+index 584c00d..fd93085 100644
+--- a/src/player.cpp
++++ b/src/player.cpp
+@@ -45,6 +45,7 @@
+ 	m_breath(-1),
+ 	m_pitch(0),
+ 	m_yaw(0),
++	m_fov(72),
+ 	m_speed(0,0,0),
+ 	m_position(0,0,0),
+ 	m_collisionbox(-BS*0.30,0.0,-BS*0.30,BS*0.30,BS*1.55,BS*0.30),
+diff --git a/src/player.h b/src/player.h
+index 12ea0db..fcd7f97 100644
+--- a/src/player.h
++++ b/src/player.h
+@@ -175,6 +175,16 @@ class Player
+ 		return -1.0 * m_pitch * core::DEGTORAD;
+ 	}
+ 
++	virtual void setFOV(f32 fov)
++	{
++		m_fov = fov;
++	}
++
++	f32 getFOV()
++	{
++		return m_fov;
++	}
++
+ 	f32 getRadYaw()
+ 	{
+ 		return (m_yaw + 90.) * core::DEGTORAD;
+@@ -295,6 +305,7 @@ class Player
+ 	u16 m_breath;
+ 	f32 m_pitch;
+ 	f32 m_yaw;
++	f32 m_fov;
+ 	v3f m_speed;
+ 	v3f m_position;
+ 	core::aabbox3d<f32> m_collisionbox;
+diff --git a/src/script/lua_api/l_object.cpp b/src/script/lua_api/l_object.cpp
+index c324ced..dfa76ba 100644
+--- a/src/script/lua_api/l_object.cpp
++++ b/src/script/lua_api/l_object.cpp
+@@ -545,6 +545,33 @@ int ObjectRef::l_getyaw(lua_State *L)
+ 	return 1;
+ }
+ 
++// setfov(self, degrees)
++int ObjectRef::l_setfov(lua_State *L)
++{
++	NO_MAP_LOCK_REQUIRED;
++	ObjectRef *ref = checkobject(L, 1);
++	Player *player = getplayer(ref);
++	if(player == NULL) return 0;
++	f32 fov = luaL_checknumber(L, 2);
++	// Do it
++	getServer(L)->setPlayerFOV(player, fov);
++	//player->setFOV(fov);
++	return 0;
++}
++
++// getfov(self)
++int ObjectRef::l_getfov(lua_State *L)
++{
++	NO_MAP_LOCK_REQUIRED;
++	ObjectRef *ref = checkobject(L, 1);
++	LuaEntitySAO *co = getluaobject(ref);
++	if(co == NULL) return 0;
++	// Do it
++	f32 fov = co->getFOV();
++	lua_pushnumber(L, fov);
++	return 1;
++}
++
+ // settexturemod(self, mod)
+ int ObjectRef::l_settexturemod(lua_State *L)
+ {
+@@ -1142,6 +1169,8 @@ void ObjectRef::Register(lua_State *L)
+ 	luamethod(ObjectRef, getacceleration),
+ 	luamethod(ObjectRef, setyaw),
+ 	luamethod(ObjectRef, getyaw),
++	luamethod(ObjectRef, setfov),
++	luamethod(ObjectRef, getfov),
+ 	luamethod(ObjectRef, settexturemod),
+ 	luamethod(ObjectRef, setsprite),
+ 	luamethod(ObjectRef, get_entity_name),
+diff --git a/src/script/lua_api/l_object.h b/src/script/lua_api/l_object.h
+index 8fd6c8e..acf653f 100644
+--- a/src/script/lua_api/l_object.h
++++ b/src/script/lua_api/l_object.h
+@@ -139,6 +139,12 @@ class ObjectRef : public ModApiBase {
+ 	// getyaw(self)
+ 	static int l_getyaw(lua_State *L);
+ 
++	// setfov(self, degrees)
++	static int l_setfov(lua_State *L);
++
++	// getfov(self)
++	static int l_getfov(lua_State *L);
++
+ 	// settexturemod(self, mod)
+ 	static int l_settexturemod(lua_State *L);
+ 
+diff --git a/src/server.cpp b/src/server.cpp
+index c144be1..310d1f5 100644
+--- a/src/server.cpp
++++ b/src/server.cpp
+@@ -3847,6 +3847,21 @@ void Server::SendPlayerBreath(u16 peer_id)
+ 	SendBreath(m_con, peer_id, playersao->getBreath());
+ }
+ 
++void Server::SendPlayerSetFOV(u16 peer_id, f32 fov)
++{
++	std::ostringstream os(std::ios_base::binary);
++
++	// Write command
++	writeU16(os, TOCLIENT_SETFOV);
++	writeF1000(os, fov);
++
++	// Make data buffer
++	std::string s = os.str();
++	SharedBuffer<u8> data((u8*)s.c_str(), s.size());
++	// Send as reliable
++	m_con.Send(peer_id, 0, data, true);
++}
++
+ void Server::SendMovePlayer(u16 peer_id)
+ {
+ 	DSTACK(__FUNCTION_NAME);
+@@ -5124,6 +5139,14 @@ void Server::deleteParticleSpawnerAll(u32 id)
+ 	SendDeleteParticleSpawnerAll(id);
+ }
+ 
++void Server::setPlayerFOV(Player *player, f32 fov)
++{
++	if (!player)
++		return;
++
++	SendPlayerSetFOV(player->peer_id, fov);
++}
++
+ Inventory* Server::createDetachedInventory(const std::string &name)
+ {
+ 	if(m_detached_inventories.count(name) > 0){
+diff --git a/src/server.h b/src/server.h
+index bc7829f..c0d3fa8 100644
+--- a/src/server.h
++++ b/src/server.h
+@@ -498,6 +498,7 @@ class Server : public con::PeerHandler, public MapEventReceiver,
+ 	bool hudSetHotbarItemcount(Player *player, s32 hotbar_itemcount);
+ 	void hudSetHotbarImage(Player *player, std::string name);
+ 	void hudSetHotbarSelectedImage(Player *player, std::string name);
++	void setPlayerFOV(Player *player, f32 fov);
+ 
+ private:
+ 
+@@ -546,6 +547,7 @@ class Server : public con::PeerHandler, public MapEventReceiver,
+ 	void SendHUDChange(u16 peer_id, u32 id, HudElementStat stat, void *value);
+ 	void SendHUDSetFlags(u16 peer_id, u32 flags, u32 mask);
+ 	void SendHUDSetParam(u16 peer_id, u16 param, const std::string &value);
++	void SendPlayerSetFOV(u16 peer_id, f32 fov);
+ 
+ 	/*
+ 		Send a node removal/addition event to all clients except ignore_id.
+-- 
+1.7.9.5
+

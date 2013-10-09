@@ -1,0 +1,277 @@
+
+FirearmsLib API
+===============
+
+This document is incomplete. If you have any doubts, read the source.
+
+
+Core Module
+===========
+
+This module provides some useful helpers and core routines to firearmslib.
+
+
+firearms.get_player_info
+------------------------
+
+  get_player_info(player_or_name)
+
+Returns stored information about the player as a table. FirearmsLib
+submodules add fields to this table. The FirearmsLib core only uses the
+following fields:
+
+  `name'            Player name
+  `current_weapon'  The current weapon held by the player (an itemdef).
+
+Please note that this information is temporary, and is lost when the server
+shuts down. If you need persistent info, use `get_player_persistent_info'.
+
+Arguments:
+  player_or_name    Either a player object or a name.
+
+Return value:
+  Player information as a table.
+
+
+firearms.get_player_persistent_info
+-----------------------------------
+
+  get_player_persistent_info(player_or_name)
+
+Returns stored information about the player as a table. Contrary to
+`get_player_info', this information is stored into a database, and is
+persistent across sessions.
+
+Arguments:
+  player_or_name    Either a player object or a name.
+
+Return value:
+  Player information as a table.
+
+
+firearms.player_can_shoot
+-------------------------
+
+  player_can_shoot(player_or_name)
+
+Returns whether the specified player can shoot right now.
+
+Arguments:
+  player_or_name    Either a player object or a name.
+
+Return value:
+  True if the player is ready to shoot, else false.
+
+
+Weapon Module
+=============
+
+
+firearms.weapon.register
+------------------------
+
+  register(name, weapon_def)
+
+Registers a new weapon. This is a convenient wrapper around
+`minetest.register_craftitem' that sets some fields to useful defaults if not
+specified.
+
+Arguments:
+  name          Name of this weapon, in the format `modname:itemname'.
+  weapon_def    Information about this weapon (like a craftitem).
+
+Return value:
+  None.
+
+See also:
+  Weapon Information
+
+
+Event Module
+============
+
+
+firearms.event.register
+-----------------------
+
+  register(eventtype, callback)
+
+Registers a new callback in the event system. The arguments to the callback
+depend on the event type.
+
+Arguments:
+  eventtype     Type of event the callback will receive.
+  callback      Callback function.
+
+Return value:
+  None.
+
+See also:
+  Events
+
+
+firearms.event.trigger
+----------------------
+
+  trigger(eventtype, ...)
+
+Triggers an event, calling each registered callback in turn.
+
+Arguments:
+  eventtype     Event type to trigger.
+  ...           Arguments to the callbacks.
+
+Return value:
+  If any callback returns a value other than `nil', returns this value and
+  stops calling other callbacks, else returns `nil'.
+
+See also:
+  Events
+
+
+Action Module
+=============
+
+This module contains just a few standard actions. See "Actions" section below
+for information.
+
+
+Weapon Information
+==================
+
+Information about the weapon is stored in a table named `firearms' inside the
+item definition. The `firearms.weapon.register' function is a convenient
+wrapper around `minetest.register_craftitem' which sets some required fields
+to suitable defaults, and other fields (such as inventory image) to useful
+defaults based on the item name.
+
+In the tables below, "default" means the default set by `register'. If you use
+`minetest.register_craftitem' directly these fields won't be set.
+
+weapon_def = {
+	-- Other fields here.
+	firearms = <weapon info>, -- See below.
+}
+
+weapon_info = {
+
+	-- Information about what to display on hud.
+	hud = {
+		-- Image for the ammo display.
+		-- Optional; default "<modname>_<itemname>_hud.png".
+		image = "foo_bar.png",
+
+		-- List of images (and parameters) for crosshairs.
+		-- See below for more info.
+		-- Optional; default crosshair shown if no one specified.
+		crosshairs = { ... },
+	},
+
+	
+
+	-- List of ammo slots. Each weapon may have one or more ammo slots.
+	-- For example, an assault rifle may have a grenade launcher attached.
+	-- In that case, define a slot for the rifle ammo, and another for the
+	-- grenades.
+	slots = { { bullet="modname:itemname", clipsize=10 }, ... },
+
+	-- "Normal" FOV (field of view) when the weapon is in hand.
+	-- Positive numbers specify absolute FOV values; negative numbers specify
+	-- relative ones. For example, if "fov" setting in `minetest.conf' is 72
+	-- (the default), then -50 is 36 (50%), -100 is 72 (100%), etc. Note that
+	-- the engine clamps the final value so it ends in the range (10-150).
+	-- See "Field Of View" section below for more notes about this.
+	fov = -100,
+
+	-- Same as above, but used by the `toggle_scope' action (See below) for
+	-- telescopic sights, etc.
+	-- See "Field Of View" section below for more notes about this.
+	zoomed_fov = -100,
+
+	-- Actions the player can perform with the weapon.
+	-- See "Actions" section below for more info.
+	actions = { ... },
+
+}
+
+
+Events
+======
+
+
+Actions
+=======
+
+Every weapon can have up to four "actions": "primary", "secondary",
+"primary_shift", and "secondary_shift".
+
+The "primary" action is executed by pressing the Left Mouse Button. By default,
+this is `firearms.action.shoot'.
+
+The "secondary" action is executed by pressing the Right Mouse Button. Sniper
+rifles have `firearms.action.toggle_scope' as default for this. Other weapons
+have nothing here.
+
+The "primary_shift" action is executed by pressing the Left Mouse Button while
+holding down the "sneak" key (by default "Shift"). By default, this is
+`firearms.action.reload'.
+
+The "secondary_shift" action is executed by pressing the Right Mouse Button
+while holding down the "sneak" key (by default "Shift"). Currently, no weapon
+uses this action.
+
+To define actions for a weapon, you specify a table named as the action (for
+example, "primary") in the `actions' field of `weapon_info'. For example:
+
+  firearms.weapon.register("foo:bar", {
+    -- Other stuff here.
+    firearms = {
+      -- More stuff here.
+      actions = {
+        primary = {
+          description = "Do Something", -- Used by the /weapon_info command.
+          func = function(player, player_info, weapon_info)
+            -- Do something here.
+          end,
+        },
+      },
+    },
+  })
+
+This mod comes with some useful actions; you may use those or define your own.
+
+  firearms.action.shoot
+    Shoot the weapon using the currently selected ammo slot.
+
+  firearms.action.reload
+    Reload the currently selected ammo slot.
+
+  firearms.action.toggle_scope
+    Used by sniper rifles, etc., to toggle precise aiming.
+
+To use one of those, simply reference it in one of the `actions' in the
+`weapon_info' table. For example:
+
+  actions = {
+    primary = firearms.action.shoot,
+    secondary = firearms.action.toggle_scope,
+  }
+
+Field Of View
+-------------
+
+FOV-related settings are only a hint, and whether or not this works depends on
+the game mode, and if there's support in the engine.
+
+Changing FOV on the fly only works on single player, or if you apply the
+`player_set_fov.patch' file distributed with this mod to the engine.
+[ I hope the patch can be merged into upstream. ]
+
+
+About this document
+===================
+
+Copyright (C) 2013 Diego Martínez <kaeza>
+
+Distributed under the same terms as firearms modpack itself.
+See `doc/LICENSE.txt' for the full license text.

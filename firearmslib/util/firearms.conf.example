@@ -1,0 +1,28 @@
+
+# Example configuration file for firearms mod.
+# Save as `<worldpath>/firearms.conf', uncomment and edit the lines you want.
+
+# Enable particles for disposed bullet shells.
+#   self = only show to shooting player
+#   all = show to all players
+#   none = disable
+#particle_shells = self
+
+# Enable particles for muzzle fire.
+#   self = only show to shooting player
+#   all = show to all players
+#   none = disable
+#particle_fire = self
+
+# Enable particles for bullets.
+#   self = only show to shooting player
+#   all = show to all players
+#   none = disable
+# Note that this option has no effect on bigger projectiles like rockets.
+#particle_bullets = self
+
+# Comma separated list of items to enable.
+#items = m9,m3,m4,awp,nvg,medkit
+
+# Comma separated list of weapon types to enable.
+#weapon_types = pistol,shotgun,assault_rifle,sniper_rifle
