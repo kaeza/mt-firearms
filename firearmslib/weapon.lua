@@ -1,4 +1,13 @@
 
+--[[
+  || weapon.lua
+  || Routines to deal with weapons.
+  ||
+  || Part of the Firearms Modpack for Minetest.
+  || Copyright (C) 2013 Diego Martínez <kaeza>
+  || See `LICENSE.txt' for details.
+--]]
+
 local DEF_WIELD_SCALE = { x=2, y=2, z=2 }
 
 local special_inits = {
@@ -9,7 +18,33 @@ local special_inits = {
 
 local registered = { }
 
-local function register(name, weapon_def)
+--[[
+  | registered[name]
+  |
+  | List of weapons registered through `register'. Indexed by name.
+--]]
+firearms.weapon.registered = registered
+
+--[[
+  | register(name, weapon_def)
+  |
+  | Registers a new weapon.
+  |
+  | The `name' argument must conform to Minetest rules for item names
+  | (see `minetest.register_craftitem' or `minetest.register_node').
+  |
+  | The weapon definition is just a regular table with the same fields
+  | as for `minetest.register_craftitem'. This function just sets some
+  | unspecified fields to useful default values.
+  |
+  | Arguments:
+  |   name          The weapon item name.
+  |   weapon_def    Weapon definition table.
+  |
+  | Return value:
+  |   None.
+--]]
+function firearms.weapon.register(name, weapon_def)
 
 	local itemname_prefix
 	if name:sub(1, 1) == ":" then
@@ -71,21 +106,3 @@ local function register(name, weapon_def)
 	minetest.register_craftitem(name, weapon_def)
 
 end
-
-local weapon_meta_methods = {
-	
-}
-
-local function get_meta(itemstack)
-	local def = itemstack:get_definition()
-	if not (def and def.firearms) then return end
-	local meta 
-end
-
--- Exports
-firearms = firearms or { }
-firearms.weapon = firearms.weapon or { }
-firearms.weapon.registered = registered
-firearms.weapon.register = register
-firearms.weapon.shoot = shoot
-firearms.weapon.player_shoot = player_shoot

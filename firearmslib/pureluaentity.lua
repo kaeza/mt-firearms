@@ -18,6 +18,9 @@
   ||   - Serialization and deserialization (on reload and unload respectively)
   ||     are not supported yet, so the "entities" are temporary and cease to
   ||     exist at server shutdown.
+  ||
+  || Copyright (C) 2013 Diego Martínez <kaeza>
+  || See `LICENSE.txt' for details.
 --]]
 
 local base_entity_def = {

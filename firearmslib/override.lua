@@ -1,6 +1,11 @@
 
 --[[
-  || override.lua: Extend some default nodes to support FirearmsLib features.
+  || override.lua
+  || Extend some default nodes to support FirearmsLib features.
+  ||
+  || Part of the Firearms Modpack for Minetest.
+  || Copyright (C) 2013 Diego Martínez <kaeza>
+  || See `LICENSE.txt' for details.
 --]]
 
 local function copytable(t1, t2)

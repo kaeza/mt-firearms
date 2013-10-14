@@ -1,4 +1,13 @@
 
+--[[
+  || chatcommands.lua
+  || FirearmsLib chat command definitions.
+  ||
+  || Part of the Firearms Modpack for Minetest.
+  || Copyright (C) 2013 Diego Martínez <kaeza>
+  || See `LICENSE.txt' for details.
+--]]
+
 local send = minetest.chat_send_player
 local esc = minetest.formspec_escape
 

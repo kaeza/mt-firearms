@@ -1,7 +1,22 @@
 
+--[[
+  || action.lua
+  || Useful actions for weapons.
+  ||
+  || Part of the Firearms Modpack for Minetest.
+  || Copyright (C) 2013 Diego Martínez <kaeza>
+  || See `LICENSE.txt' for details.
+--]]
+
 local random = math.random
 
-local shoot = {
+--[[
+  | shoot
+  |
+  | Shoots the current weapon, using the ammo for the currently
+  | selected slot.
+--]]
+firearms.action.shoot = {
 	description = "Shoot",
 	func = function(player, player_info, weapon_info)
 		local ammo
@@ -81,7 +96,13 @@ local function count_ammo(inv, name)
 	return 100
 end
 
-local reload = {
+--[[
+  | reload
+  |
+  | Reloads the current weapon, using the ammo for the currently
+  | selected slot.
+--]]
+firearms.action.reload = {
 	description = "Reload",
 	func = function(player, player_info, weapon_info)
 		if weapon_info then
@@ -132,7 +153,13 @@ function set_scope(player, player_info, weapon_info, flag)
 	player_info.zoomed = flag
 end
 
-local toggle_scope = {
+--[[
+  | toggle_scope
+  |
+  | Toggles on or off telescopic sights, and adjusts player
+  | FOV accordingly (if supported).
+--]]
+firearms.action.toggle_scope = {
 	description = "Toggle Scope",
 	func = function(player, player_info, weapon_info)
 		set_scope(player, player_info, weapon_info, not player_info.zoomed)
@@ -180,10 +207,3 @@ pureluaentity.register(":firearms:bullet", {
 firearms.event.register("weapon_change", function(player, player_info, weapon_info)
 	set_scope(player, player_info, weapon_info, false)
 end)
-
--- Exports
-firearms = firearms or { }
-firearms.action = firearms.action or { }
-firearms.action.shoot = shoot
-firearms.action.reload = reload
-firearms.action.toggle_scope = toggle_scope
