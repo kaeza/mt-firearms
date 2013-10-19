@@ -25,6 +25,8 @@ dofile(MP.."/event.lua")
 dofile(MP.."/action.lua")
 dofile(MP.."/weapon.lua")
 
+dofile(MP.."/bullet.lua")
+
 dofile(MP.."/chatcommands.lua")
 
 dofile(MP.."/override.lua")
