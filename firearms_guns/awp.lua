@@ -12,11 +12,11 @@ firearms.weapon.register(":firearms:awp", {
 			overlay = "firearms_crosshair_sniper_scope.png",
 		},
 		zoomed_fov = -25,
-		slots = { { ammo="firearms:ammo_556mm", clipsize=5, }, },
+		slots = { { ammo="firearms:ammo_338", clipsize=5, }, },
 		range = 50,
 		spread = 5,
 		shoot_cooldown = 2.5,
-		weight = 3.2, -- in Kg
+		weight = 6.5, -- in Kg
 	},
 })
 

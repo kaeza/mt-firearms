@@ -8,8 +8,8 @@ firearms.weapon.register(":firearms:m4", {
 		slots = { { ammo="firearms:ammo_556", clipsize=30, }, },
 		range = 35,
 		spread = 35,
-		shoot_cooldown = 0.1,
-		weight = 3, -- in Kg
+		shoot_cooldown = 0.15,
+		weight = 2.9, -- in Kg
 	},
 })
 

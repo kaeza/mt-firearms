@@ -8,7 +8,7 @@ firearms.weapon.register(":firearms:m3", {
 		range = 15,
 		spread = 150,
 		shoot_cooldown = 1.2,
-		weight = 3, -- in Kg
+		weight = 3.2, -- in Kg
 		pellets = 9,
 	},
 })
