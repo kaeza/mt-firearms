@@ -25,11 +25,11 @@ end
 
 local PS = minetest.pos_to_string
 
-local function find_collision_point(type, pos, node_or_obj)
+local function find_collision_point(objtype, pos, node_or_obj)
 	-- TODO:
 	-- This should return the actual point where the bullet
 	-- "collided" with it's target, or nil if it did not "hit".
-	if type == "node" then
+	if objtype == "node" then
 		local boxes
 		local def = minetest.registered_nodes[node_or_obj.name]
 		if not (def and def.walkable) then return end
@@ -42,13 +42,20 @@ local function find_collision_point(type, pos, node_or_obj)
 			pos.x - math.floor(pos.x) + 0.5,
 			pos.y - math.floor(pos.y) + 0.5,
 			pos.z - math.floor(pos.z) + 0.5
-		for _, box in ipairs(boxes) do
-			local x1, y1, z1, x2, y2, z2 = unpack(box)
+		if type(boxes[1]) == "number" then
+			local x1, y1, z1, x2, y2, z2 = unpack(boxes)
 			if is_inside(px, py, pz, x1, y1, z1, x2, y2, z2) then
 				return pos
 			end
+		else
+			for _, box in ipairs(boxes) do
+				local x1, y1, z1, x2, y2, z2 = unpack(box)
+				if is_inside(px, py, pz, x1, y1, z1, x2, y2, z2) then
+					return pos
+				end
+			end
 		end
-	elseif type == "object" then
+	elseif objtype == "object" then
 		local objpos = node_or_obj:getpos()
 		local px, py, pz =
 			pos.x - objpos.x,
