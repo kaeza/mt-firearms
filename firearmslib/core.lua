@@ -98,6 +98,9 @@ elseif minetest.is_singleplayer() then
 		end
 		minetest.setting_set("fov", tostring(fov))
 	end
+	minetest.register_on_shutdown(function()
+		minetest.setting_set("fov", tostring(normal_fov))
+	end)
 else
 	minetest.log("info", "[firearms] No way to change player FOV.")
 	minetest.log("info", "[firearms] Read the firearmslib docs for more info.")
