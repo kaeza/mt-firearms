@@ -114,7 +114,7 @@ function bullet_ent:on_step(dtime)
 				else
 					local e = obj:get_luaentity()
 					firearms.event.trigger("object_shot", obj, self)
-					if e and e.on_shoot and e.on_shoot(e, self) then return end
+					if e and e.on_shoot and e.on_shoot(obj, self) then return end
 					self.object:remove()
 					return
 				end
@@ -129,7 +129,14 @@ function bullet_ent:on_step(dtime)
 end
 
 firearms.event.register("player_shot", function(player, bullet)
-	player:set_hp(player:get_hp() - 2)
+	player:set_hp(player:get_hp() - bullet.damage)
+end)
+
+firearms.event.register("object_shot", function(object, bullet)
+	local e = object:get_luaentity()
+	if e and (e.name ~= "__builtin:item") then
+		object:set_hp(object:get_hp() - bullet.damage)
+	end
 end)
 
 pureluaentity.register(":firearms:bullet", bullet_ent)

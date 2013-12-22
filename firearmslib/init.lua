@@ -14,7 +14,8 @@ firearms = {
 	config = { },
 	event = { },
 	action = { },
-	weapon = { }
+	weapon = { },
+	ammo = { },
 }
 
 dofile(MP.."/pureluaentity.lua")
@@ -24,6 +25,7 @@ dofile(MP.."/core.lua")
 dofile(MP.."/event.lua")
 dofile(MP.."/action.lua")
 dofile(MP.."/weapon.lua")
+dofile(MP.."/ammo.lua")
 
 dofile(MP.."/bullet.lua")
 

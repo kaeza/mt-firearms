@@ -5,11 +5,18 @@ firearms.weapon.register(":firearms:m4", {
 		--type = "assault_rifle",
 		type = "rifle",
 		hud = { crosshairs = { { image="firearms_crosshair_rifle.png", } } },
-		slots = { { ammo="firearms:ammo_556", clipsize=30, }, },
+		slots = { { ammo="firearms:bullet_556mm", clipsize=30, }, },
 		range = 35,
 		spread = 35,
 		shoot_cooldown = 0.15,
 		weight = 2.9, -- in Kg
+	},
+})
+
+firearms.ammo.register(":firearms:bullet_556mm", {
+	description = "5.56mm Rounds",
+	firearms = {
+		damage = 4,
 	},
 })
 

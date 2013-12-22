@@ -4,12 +4,20 @@ firearms.weapon.register(":firearms:m3", {
 	firearms = {
 		type = "shotgun",
 		hud = { crosshairs = { { image="firearms_crosshair_shotgun.png", } } },
-		slots = { { ammo="firearms:ammo_12g", clipsize=8, }, },
+		slots = { { ammo="firearms:bullet_12g", clipsize=8, }, },
 		range = 15,
 		spread = 150,
 		shoot_cooldown = 1.2,
 		weight = 3.2, -- in Kg
 		pellets = 9,
+	},
+})
+
+firearms.ammo.register(":firearms:bullet_12g", {
+	description = "12 Gauge Shells",
+	firearms = {
+		damage = 20,
+		pellets = 8,
 	},
 })
 

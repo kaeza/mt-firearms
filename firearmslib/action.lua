@@ -19,13 +19,15 @@ local random = math.random
 firearms.action.shoot = {
 	description = "Shoot",
 	func = function(player, player_info, weapon_info)
-		local ammo
-		player_info.ammo = player_info.ammo or { }
+		local ammo_info
 		if weapon_info then
-			ammo = player_info.ammo and player_info.ammo[player_info.current_weapon.name]
+			player_info.ammo = player_info.ammo_info or { }
+			ammo_info = (player_info.ammo_info and
+				player_info.ammo_info[player_info.current_weapon.name]
+			)
 		end
 		-- No ammo left in magazine; must reload.
-		if (not ammo) or (ammo == 0) then
+		if (not ammo_info) or (ammo_info.count == 0) then
 			if weapon_info.sounds.empty then
 				minetest.sound_play(weapon_info.sounds.empty)
 			end
@@ -41,20 +43,19 @@ firearms.action.shoot = {
 			local muzzle_pos = { x=player_pos.x, y=player_pos.y, z=player_pos.z, } 
 			local spread = weapon_info.spread or 10
 			local yaw = player:get_look_yaw()
-			player_info.ammo[player_info.current_weapon.name] =
-			  player_info.ammo[player_info.current_weapon.name] - 1
+			ammo_info.count = ammo_info.count - 1
 			muzzle_pos.y = muzzle_pos.y + 1.45
 			muzzle_pos.x = muzzle_pos.x + (math.sin(yaw) / 2)
 			muzzle_pos.z = muzzle_pos.z - (math.cos(yaw) / 2)
 			if firearms.hud then
 				firearms.hud.update_ammo_count(player,
 				  player_info,
-				  player_info.ammo[player_info.current_weapon.name]
+				  ammo_info.count
 				)
 			end
 			player_info.shoot_cooldown = (weapon_info.shoot_cooldown or 1)
 			player_pos.y = player_pos.y + 1.625
-			for n = 1, (weapon_info.pellets or 1) do
+			for n = 1, (ammo_info.item_def.firearms.pellets or 1) do
 				local bullet_dir = {
 					x = player_dir.x + (random(-spread, spread) / 1000),
 					y = player_dir.y + (random(-spread, spread) / 1000),
@@ -62,8 +63,9 @@ firearms.action.shoot = {
 				}
 				local ent = pureluaentity.add(player_pos, "firearms:bullet")
 				ent.player = player
+				ent.player_name = player:get_player_name()
 				ent.player_info = player_info
-				ent.bullet_info = { } -- TODO
+				ent.bullet_info = ammo_info.item_def
 				ent.object:setvelocity({
 					x = bullet_dir.x * 20,
 					y = bullet_dir.y * 20,
@@ -91,11 +93,6 @@ firearms.action.shoot = {
 	end,
 }
 
-local function count_ammo(inv, name)
-	-- TODO
-	return 100
-end
-
 --[[
   | reload
   |
@@ -106,9 +103,8 @@ firearms.action.reload = {
 	description = "Reload",
 	func = function(player, player_info, weapon_info)
 		if weapon_info then
-			local ammo = (player_info.ammo
-			              and player_info.ammo[player_info.current_weapon.name]
-			              or 0)
+			local ammo_info = (player_info.ammo_info
+			              and player_info.ammo_info[player_info.current_weapon.name])
 			-- TODO: Add support for more than one slot.
 			local clipsize = (weapon_info.slots
 			                  and weapon_info.slots[1]
@@ -119,21 +115,44 @@ firearms.action.reload = {
 				                ))
 				return
 			end
-			if ammo < clipsize then
-				-- TODO
-				local count = count_ammo()--(player:get_inventory():get_list("main"), "")
+			if not ammo_info then
+				local item_def = firearms.ammo.registered[weapon_info.slots[1].ammo]
+				if not item_def then
+					firearms.warning(("bullet type %s is not registered"):format(
+						weapon_info.slots[1].ammo
+					))
+					return
+				end
+				ammo_info = {
+					count = 0,
+					item_def = item_def,
+				}
+				player_info.ammo_info = player_info.ammo_info or { }
+				player_info.ammo_info[player_info.current_weapon.name] = ammo_info
+			end
+			if ammo_info.count < clipsize then
+				local inv = player:get_inventory()
+				local count = firearms.count_items(inv, "main", ammo_info.item_def.name)
 				if count > 0 then
 					player_info.shoot_cooldown = weapon_info.reload_time or 3
 					if weapon_info.sounds.reload then
 						minetest.sound_play(weapon_info.sounds.reload)
 					end
-					local needed = math.min(clipsize - ammo, count)
-					player_info.ammo = player_info.ammo or { }
-					player_info.ammo[player_info.current_weapon.name] = ammo + needed
+					local needed = math.min(clipsize - ammo_info.count, count)
+					player_info.ammo_info = player_info.ammo_info or { }
+					player_info.ammo_info[player_info.current_weapon.name] =
+					  player_info.ammo_info[player_info.current_weapon.name] or
+					  ammo_info
+					ammo_info.count = ammo_info.count + needed
+					local stack = ItemStack({
+						name = ammo_info.item_def.name,
+						count = needed,
+					})
+					inv:remove_item("main", stack)
 					if firearms.hud then
 						firearms.hud.update_ammo_count(player,
 						  player_info,
-						  player_info.ammo[player_info.current_weapon.name]
+						  ammo_info.count
 						)
 					end
 				end

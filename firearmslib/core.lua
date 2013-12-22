@@ -142,9 +142,21 @@ function firearms.warning(message, level)
 
 end
 
+function firearms.count_items(inv, listname, itemname)
+	local list = inv:get_list(listname)
+	local c = 0
+	for i = 1, #list do
+		local stack = list[i]
+		if stack and (not stack:is_empty()) and (stack:get_name() == itemname) then
+			c = c + (stack:get_count() or 1)
+		end
+	end
+	return c
+end
+
 local function do_action(player, player_info, weapon_info, action)
 
-	local a = weapon_info.actions[action]
+	local a = weapon_info and weapon_info.actions and weapon_info.actions[action]
 	if not a then return end
 
 	a.func(player, player_info, weapon_info)
