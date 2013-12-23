@@ -55,7 +55,10 @@ firearms.action.shoot = {
 			end
 			player_info.shoot_cooldown = (weapon_info.shoot_cooldown or 1)
 			player_pos.y = player_pos.y + 1.625
-			for n = 1, (ammo_info.item_def.firearms.pellets or 1) do
+			local pellets = (ammo_info.item_def.firearms.pellets or 1)
+			local damage = (ammo_info.item_def.firearms.damage or 0)
+			local player_name = player:get_player_name()
+			for n = 1, pellets do
 				local bullet_dir = {
 					x = player_dir.x + (random(-spread, spread) / 1000),
 					y = player_dir.y + (random(-spread, spread) / 1000),
@@ -63,9 +66,10 @@ firearms.action.shoot = {
 				}
 				local ent = pureluaentity.add(player_pos, "firearms:bullet")
 				ent.player = player
-				ent.player_name = player:get_player_name()
+				ent.player_name = player_name
 				ent.player_info = player_info
-				ent.bullet_info = ammo_info.item_def
+				ent.ammo_def = ammo_info.item_def
+				ent.damage = damage / pellets
 				ent.object:setvelocity({
 					x = bullet_dir.x * 20,
 					y = bullet_dir.y * 20,
