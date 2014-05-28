@@ -29,7 +29,7 @@ firearms.action.shoot = {
 		-- No ammo left in magazine; must reload.
 		if (not ammo_info) or (ammo_info.count == 0) then
 			if weapon_info.sounds.empty then
-				minetest.sound_play(weapon_info.sounds.empty)
+				minetest.sound_play(weapon_info.sounds.empty, {pos = player:getpos()})
 			end
 			return
 		end
@@ -37,7 +37,7 @@ firearms.action.shoot = {
 			local player_pos = player:getpos()
 			local player_dir = player:get_look_dir()
 			if weapon_info.sounds.shoot then
-				minetest.sound_play(weapon_info.sounds.shoot)
+				minetest.sound_play(weapon_info.sounds.shoot, {pos = player:getpos()})
 			end
 			-- TODO: Calc this properly.
 			local muzzle_pos = { x=player_pos.x, y=player_pos.y, z=player_pos.z, } 
@@ -140,7 +140,7 @@ firearms.action.reload = {
 				if count > 0 then
 					player_info.shoot_cooldown = weapon_info.reload_time or 3
 					if weapon_info.sounds.reload then
-						minetest.sound_play(weapon_info.sounds.reload)
+						minetest.sound_play(weapon_info.sounds.reload, {pos = player:getpos()})
 					end
 					local needed = math.min(clipsize - ammo_info.count, count)
 					player_info.ammo_info = player_info.ammo_info or { }
