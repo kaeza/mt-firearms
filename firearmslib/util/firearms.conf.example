@@ -26,3 +26,8 @@
 
 # Comma separated list of weapon types to enable.
 #weapon_types = pistol,shotgun,assault_rifle,sniper_rifle
+
+# Allow crafting the items. Disable if you use vending machines or have
+# other means to give weapons to players and don't want them to craft
+# weapons by themselves.
+#allow_crafting = true

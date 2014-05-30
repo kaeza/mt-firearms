@@ -12,13 +12,17 @@ minetest.register_craftitem(":firearms:nvg", {
 	end,
 })
 
-local I, M = "default:steel_ingot", "default:mese"
+if firearms.config.get_bool("allow_crafting", true) then
 
-minetest.register_craft({
-	output = "firearms:nvg",
-	recipe = {
-		{ I, I, I, },
-		{ M, I, M, },
-		{ I, I, I, },
-	},
-})
+	local I, M = "default:steel_ingot", "default:mese"
+
+	minetest.register_craft({
+		output = "firearms:nvg",
+		recipe = {
+			{ I, I, I, },
+			{ M, I, M, },
+			{ I, I, I, },
+		},
+	})
+
+end

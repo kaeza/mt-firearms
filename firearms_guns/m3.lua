@@ -21,13 +21,17 @@ firearms.ammo.register(":firearms:bullet_12g", {
 	},
 })
 
-local _, I, W = "", "default:steel_ingot", "default:wood"
+if firearms.config.get_bool("allow_crafting", true) then
 
-minetest.register_craft({
-	output = "firearms:m3",
-	recipe = {
-		{ I, _, _ },
-		{ W, I, _ },
-		{ _, W, I },
-	},
-})
+	local _, I, W = "", "default:steel_ingot", "default:wood"
+
+	minetest.register_craft({
+		output = "firearms:m3",
+		recipe = {
+			{ I, _, _ },
+			{ W, I, _ },
+			{ _, W, I },
+		},
+	})
+
+end

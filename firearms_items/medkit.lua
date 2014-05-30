@@ -9,13 +9,17 @@ minetest.register_craftitem(":firearms:medkit", {
 	end,
 })
 
-local W, A = "default:wood", "default:apple"
+if firearms.config.get_bool("allow_crafting", true) then
 
-minetest.register_craft({
-	output = "firearms:medkit",
-	recipe = {
-		{ W, A, W, },
-		{ A, A, A, },
-		{ W, A, W, },
-	},
-})
+	local W, A = "default:wood", "default:apple"
+
+	minetest.register_craft({
+		output = "firearms:medkit",
+		recipe = {
+			{ W, A, W, },
+			{ A, A, A, },
+			{ W, A, W, },
+		},
+	})
+
+end

@@ -20,13 +20,17 @@ firearms.weapon.register(":firearms:awp", {
 	},
 })
 
-local _, I, W = "", "default:steel_ingot", "default:wood"
+if firearms.config.get_bool("allow_crafting", true) then
 
-minetest.register_craft({
-	output = "firearms:awp",
-	recipe = {
-		{ I, I, _ },
-		{ _, I, I },
-		{ _, W, W },
-	},
-})
+	local _, I, W = "", "default:steel_ingot", "default:wood"
+
+	minetest.register_craft({
+		output = "firearms:awp",
+		recipe = {
+			{ I, I, _ },
+			{ _, I, I },
+			{ _, W, W },
+		},
+	})
+
+end
