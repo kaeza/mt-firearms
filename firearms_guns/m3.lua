@@ -34,4 +34,13 @@ if firearms.config.get_bool("allow_crafting", true) then
 		},
 	})
 
+	minetest.register_craft({
+		output = "firearms:bullet_12g 8",
+		type = "shapeless",
+		recipe = {
+			"firearms:iron_ball", "firearms:iron_ball",
+			"firearms:iron_ball", "tnt:gunpowder",
+		},
+	})
+
 end

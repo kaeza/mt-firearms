@@ -12,11 +12,18 @@ firearms.weapon.register(":firearms:awp", {
 			overlay = "firearms_crosshair_sniper_scope.png",
 		},
 		zoomed_fov = -25,
-		slots = { { ammo="firearms:bullet_338", clipsize=5, }, },
+		slots = { { ammo="firearms:bullet_762mm", clipsize=5, }, },
 		range = 50,
 		spread = 5,
 		shoot_cooldown = 2.5,
 		weight = 6.5, -- in Kg
+	},
+})
+
+firearms.ammo.register(":firearms:bullet_762mm", {
+	description = "7.62x51mm Rounds",
+	firearms = {
+		damage = 15,
 	},
 })
 
@@ -30,6 +37,15 @@ if firearms.config.get_bool("allow_crafting", true) then
 			{ I, I, _ },
 			{ _, I, I },
 			{ _, W, W },
+		},
+	})
+
+	minetest.register_craft({
+		output = "firearms:bullet_762mm 3",
+		type = "shapeless",
+		recipe = {
+			"default:steel_ingot", "default:steel_ingot",
+			"firearms:iron_ball", "tnt:gunpowder",
 		},
 	})
 
