@@ -21,7 +21,7 @@ firearms.action.shoot = {
 	func = function(player, player_info, weapon_info)
 		local ammo_info
 		if weapon_info then
-			player_info.ammo = player_info.ammo_info or { }
+			player_info.ammo_info = player_info.ammo_info or { }
 			ammo_info = (player_info.ammo_info and
 				player_info.ammo_info[player_info.current_weapon.name]
 			)
@@ -48,10 +48,7 @@ firearms.action.shoot = {
 			muzzle_pos.x = muzzle_pos.x + (math.sin(yaw) / 2)
 			muzzle_pos.z = muzzle_pos.z - (math.cos(yaw) / 2)
 			if firearms.hud then
-				firearms.hud.update_ammo_count(player,
-				  player_info,
-				  ammo_info.count
-				)
+				firearms.hud.update_ammo_hud(player, player_info, ammo_info.count)
 			end
 			player_info.shoot_cooldown = (weapon_info.shoot_cooldown or 1)
 			player_pos.y = player_pos.y + 1.625
@@ -154,10 +151,7 @@ firearms.action.reload = {
 					})
 					inv:remove_item("main", stack)
 					if firearms.hud then
-						firearms.hud.update_ammo_count(player,
-						  player_info,
-						  ammo_info.count
-						)
+						firearms.hud.update_ammo_hud(player, player_info)
 					end
 				end
 			end

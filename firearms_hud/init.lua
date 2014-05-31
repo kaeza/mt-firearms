@@ -42,23 +42,43 @@ local function set_player_overlay(player_or_name, overlay)
 	end
 end
 
+local BG_W = 59
+local BG_H = 27
+--local BG_ASPECT = 3 / 4 -- 4:3
+local BG_ASPECT = 9 / 16 -- 16:9
+local AMMO_HUD_X_SCALE = -20
+local AMMO_HUD_Y_SCALE = AMMO_HUD_X_SCALE * BG_ASPECT
+local AMMO_HUD_SCALE = { x = AMMO_HUD_X_SCALE, y = AMMO_HUD_Y_SCALE }
+local AMMO_HUD_POS = { x = 1, y = 1 }
+local AMMO_HUD_ALIGN = { x = -1, y = -1 }
+local AMMO_HUD_OFFS = { x = -16, y = -16 }
 local FONT_W = 11
 local FONT_H = 19
 
-local function make_hud_number(n)
-	local s = tostring(n)
-	s = (" "):rep(3 - #s)..s
-	local tex = { ("^[combine:%dx%d"):format(3 * FONT_W, FONT_H) }
-	local x = 0
+local function make_ammo_hud(player_info)
+	local ammo_name = player_info.current_weapon.firearms.slots[1].ammo
+	local ammo_def = firearms.ammo.registered[ammo_name]
+	if not ammo_def then return end
+	local item_tex = (ammo_def.firearms and ammo_def.firearms.hud
+		and ammo_def.firearms.hud.image or ammo_def.inventory_image
+	)
+	local tex = {
+		"^[combine:59x27",
+		":0,0=firearms_hud_ammo_bg.png",
+		":3,3="..item_tex,
+	}
+	local s = tostring(player_info.ammo_info[player_info.current_weapon.name].count or 0)
+	s = ("n"):rep(3 - #s)..s
+	local x = 21
 	for i = 1, 3 do
-		table.insert(tex, (":%d,0=firearms_font_%s.png"):format(x, s:sub(i, i)))
+		table.insert(tex, (":%d,4=firearms_font_%s.png"):format(x, s:sub(i, i)))
 		x = x + FONT_W
 	end
 	return table.concat(tex, "")
 end
 
-local function update_ammo_count(player, player_info, count)
-	if not count then
+local function update_ammo_hud(player, player_info)
+	if not (player_info.ammo_info and player_info.ammo_info[player_info.current_weapon.name]) then
 		if player_info.hud_ammo_count then
 			player:hud_remove(player_info.hud_ammo_count)
 			player_info.hud_ammo_count = nil
@@ -66,16 +86,16 @@ local function update_ammo_count(player, player_info, count)
 		return
 	end
 	if player_info.hud_ammo_count then
-		player:hud_change(player_info.hud_ammo_count, "text", make_hud_number(count))
+		player:hud_change(player_info.hud_ammo_count, "text", make_ammo_hud(player_info))
 	else
 		player_info.hud_ammo_count = player:hud_add({
 			name = "firearms:hud_ammo_count",
 			hud_elem_type = "image",
-			text = make_hud_number(count),
-			scale = { x=-10, y=-5 },
-			position = { x=1, y=1 },
-			alignment = { x=-1, y=-1 },
-			offset = { x=-16, y=-16 },
+			text = make_ammo_hud(player_info),
+			scale = AMMO_HUD_SCALE,
+			position = AMMO_HUD_POS,
+			alignment = AMMO_HUD_ALIGN,
+			offset = AMMO_HUD_OFFS,
 		})
 	end
 end
@@ -105,10 +125,7 @@ firearms.event.register("weapon_change", function(player, player_info, weapon_in
 				position = { x=0.5, y=0.5 },
 			})
 		end
-		update_ammo_count(player,
-		  player_info,
-		  player_info.ammo and player_info.ammo[player_info.current_weapon.name]
-		)
+		update_ammo_hud(player, player_info)
 	end
 	if minetest.has_feature("player_set_fov") then
 		player:setfov(weapon_info and weapon_info.fov or -100)
@@ -119,4 +136,4 @@ end)
 firearms = firearms or { }
 firearms.hud = firearms.hud or { }
 firearms.hud.set_player_overlay = set_player_overlay
-firearms.hud.update_ammo_count = update_ammo_count
+firearms.hud.update_ammo_hud = update_ammo_hud
