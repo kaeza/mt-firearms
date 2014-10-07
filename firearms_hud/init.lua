@@ -63,7 +63,7 @@ local function make_ammo_hud(player_info)
 		and ammo_def.firearms.hud.image or ammo_def.inventory_image
 	)
 	local tex = {
-		"^[combine:59x27",
+		"[combine:59x27",
 		":0,0=firearms_hud_ammo_bg.png",
 		":3,3="..item_tex,
 	}
