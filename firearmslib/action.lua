@@ -161,9 +161,11 @@ firearms.action.reload = {
 
 function set_scope(player, player_info, weapon_info, flag)
 	if weapon_info and flag then
+		player:hud_set_flags({wielditem=false})
 		firearms.hud.set_player_overlay(player, weapon_info.hud.overlay)
 		firearms.set_player_fov(player, weapon_info.zoomed_fov or -100)
 	else
+		player:hud_set_flags({wielditem=true})
 		firearms.set_player_fov(player, weapon_info and weapon_info.fov or -100)
 		firearms.hud.set_player_overlay(player, nil)
 	end
