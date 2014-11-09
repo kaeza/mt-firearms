@@ -297,3 +297,5 @@ set_default("weapons", "m9,m3,m4,awp")
 set_default("items", "nvg,medkit")
 
 set_default("weapon_types", "pistol,shotgun,assault_rifle,sniper_rifle")
+
+set_default("mesh_wieldview", "true")

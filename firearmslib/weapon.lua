@@ -66,8 +66,6 @@ function firearms.weapon.register(name, weapon_def)
 
 	weapon_def.firearms = weapon_def.firearms or { }
 
-	weapon_def.wield_scale = weapon_def.wield_scale or DEF_WIELD_SCALE
-
 	if not weapon_def.firearms.actions then
 		weapon_def.firearms.actions = { }
 	end
@@ -103,6 +101,17 @@ function firearms.weapon.register(name, weapon_def)
 
 	local name_noprefix = ((name:sub(1, 1) ~= ":") and name or name:sub(2))
 	registered[name_noprefix] = weapon_def
-	minetest.register_craftitem(name, weapon_def)
+	if weapon_def.mesh and firearms.config.get_bool("mesh_wieldview") then
+		weapon_def.drawtype = "mesh"
+		weapon_def.wield_image = nil
+		weapon_def.tiles = weapon_def.tiles or { itemname_prefix.."_uv.png" }
+		weapon_def.node_placement_prediction = "air"
+		weapon_def.on_place = function() end
+		minetest.register_node(name, weapon_def)
+	else
+		weapon_def.tiles = nil
+		weapon_def.wield_scale = weapon_def.wield_scale or DEF_WIELD_SCALE
+		minetest.register_craftitem(name, weapon_def)
+	end
 
 end

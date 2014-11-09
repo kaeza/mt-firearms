@@ -1,6 +1,7 @@
 
 firearms.weapon.register(":firearms:awp", {
 	description = "AWP",
+	mesh = "firearms_awp.obj",
 	firearms = {
 		--type = "sniper_rifle",
 		type = "sniper_rifle",
