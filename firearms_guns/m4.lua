@@ -1,6 +1,7 @@
 
 firearms.weapon.register(":firearms:m4", {
 	description = "M4",
+	mesh = "firearms_m4.obj",
 	firearms = {
 		--type = "assault_rifle",
 		type = "rifle",

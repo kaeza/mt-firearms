@@ -1,6 +1,7 @@
 
 firearms.weapon.register(":firearms:m3", {
 	description = "M3",
+	mesh = "firearms_m3.obj",
 	firearms = {
 		type = "shotgun",
 		hud = { crosshairs = { { image="firearms_crosshair_shotgun.png", } } },
