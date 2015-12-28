@@ -6,8 +6,10 @@ minetest.register_craftitem(":firearms:nvg", {
 		local info = firearms.get_player_info(user)
 		if info.hud_overlay then
 			firearms.hud.set_player_overlay(user)
+			user:override_day_night_ratio(nil)
 		else
 			firearms.hud.set_player_overlay(user, "firearms_nvg_overlay.png")
+			user:override_day_night_ratio(0.3)
 		end
 	end,
 })
