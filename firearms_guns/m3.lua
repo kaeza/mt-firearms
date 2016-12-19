@@ -2,15 +2,18 @@
 firearms.weapon.register(":firearms:m3", {
 	description = "M3",
 	mesh = "firearms_m3.obj",
+	wield_scale = { x=2, y=2, z=2 },
 	firearms = {
-		type = "shotgun",
+		weapon_type = "shotgun",
 		hud = { crosshairs = { { image="firearms_crosshair_shotgun.png", } } },
-		slots = { { ammo="firearms:bullet_12g", clipsize=8, }, },
+		clip = {
+			ammo = "firearms:bullet_12g",
+			size = 8,
+		},
 		range = 15,
 		spread = 150,
 		shoot_cooldown = 1.2,
 		weight = 3.2, -- in Kg
-		pellets = 9,
 	},
 })
 

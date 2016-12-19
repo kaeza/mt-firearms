@@ -2,14 +2,17 @@
 firearms.weapon.register(":firearms:m4", {
 	description = "M4",
 	mesh = "firearms_m4.obj",
+	wield_scale = { x=2, y=2, z=2 },
 	firearms = {
-		--type = "assault_rifle",
-		type = "rifle",
+		weapon_type = "rifle",
 		hud = { crosshairs = { { image="firearms_crosshair_rifle.png", } } },
-		slots = { { ammo="firearms:bullet_556mm", clipsize=30, }, },
+		clip = {
+			ammo = "firearms:bullet_556mm",
+			size = 30,
+		},
 		range = 35,
 		spread = 35,
-		shoot_cooldown = 0.15,
+		shoot_cooldown = 0.1,
 		weight = 2.9, -- in Kg
 	},
 })

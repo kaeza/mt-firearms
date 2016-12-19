@@ -1,49 +1,16 @@
 
---[[
-  || weapon.lua
-  || Routines to deal with weapons.
-  ||
-  || Part of the Firearms Modpack for Minetest.
-  || Copyright (C) 2013 Diego Martínez <kaeza>
-  || See `LICENSE.txt' for details.
---]]
-
-local DEF_WIELD_SCALE = { x=2, y=2, z=2 }
+firearms.weapon = { }
 
 local special_inits = {
 	sniper_rifle = function(weapon_def)
-		weapon_def.firearms.actions.secondary = weapon_def.firearms.actions.secondary or firearms.action.toggle_scope
+		weapon_def.firearms.actions.secondary =
+				weapon_def.firearms.actions.secondary
+				or firearms.action.toggle_scope
 	end,
 }
 
 local registered = { }
 
---[[
-  | registered[name]
-  |
-  | List of weapons registered through `register'. Indexed by name.
---]]
-firearms.weapon.registered = registered
-
---[[
-  | register(name, weapon_def)
-  |
-  | Registers a new weapon.
-  |
-  | The `name' argument must conform to Minetest rules for item names
-  | (see `minetest.register_craftitem' or `minetest.register_node').
-  |
-  | The weapon definition is just a regular table with the same fields
-  | as for `minetest.register_craftitem'. This function just sets some
-  | unspecified fields to useful default values.
-  |
-  | Arguments:
-  |   name          The weapon item name.
-  |   weapon_def    Weapon definition table.
-  |
-  | Return value:
-  |   None.
---]]
 function firearms.weapon.register(name, weapon_def)
 
 	local itemname_prefix
@@ -57,14 +24,11 @@ function firearms.weapon.register(name, weapon_def)
 
 	weapon_def.range = weapon_def.range or 0
 
-	if not weapon_def.wield_image then
-		weapon_def.wield_image = itemname_prefix.."_wield.png"
-	end
-	if not weapon_def.inventory_image then
-		weapon_def.inventory_image = itemname_prefix.."_inv.png"
-	end
+	weapon_def.inventory_image =
+			weapon_def.inventory_image or itemname_prefix.."_inv.png"
 
 	weapon_def.firearms = weapon_def.firearms or { }
+	weapon_def.firearms.type = "weapon"
 
 	if not weapon_def.firearms.actions then
 		weapon_def.firearms.actions = { }
@@ -72,11 +36,7 @@ function firearms.weapon.register(name, weapon_def)
 
 	weapon_def.firearms.actions.primary = (
 		weapon_def.firearms.actions.primary
-		or firearms.action.shoot
-	)
-	weapon_def.firearms.actions.primary_shift = (
-		weapon_def.firearms.actions.primary_shift
-		or firearms.action.reload
+		or firearms.action.SHOOT
 	)
 
 	if not weapon_def.on_use then
@@ -95,13 +55,14 @@ function firearms.weapon.register(name, weapon_def)
 	weapon_def.firearms.sounds.empty  = (weapon_def.firearms.sounds.empty
 	                                     or itemname_prefix.."_empty")
 
-	if special_inits[weapon_def.firearms.type] then
-		special_inits[weapon_def.firearms.type](weapon_def)
+	if special_inits[weapon_def.firearms.weapon_type] then
+		special_inits[weapon_def.firearms.weapon_type](weapon_def)
 	end
 
 	local name_noprefix = ((name:sub(1, 1) ~= ":") and name or name:sub(2))
 	registered[name_noprefix] = weapon_def
-	if weapon_def.mesh and firearms.config.get_bool("mesh_wieldview") then
+	if nil and weapon_def.mesh and firearms.config.get_bool("mesh_wieldview") then
+		weapon_def.wield_scale = nil
 		weapon_def.drawtype = "mesh"
 		weapon_def.wield_image = nil
 		weapon_def.tiles = weapon_def.tiles or { itemname_prefix.."_uv.png" }
@@ -110,7 +71,6 @@ function firearms.weapon.register(name, weapon_def)
 		minetest.register_node(name, weapon_def)
 	else
 		weapon_def.tiles = nil
-		weapon_def.wield_scale = weapon_def.wield_scale or DEF_WIELD_SCALE
 		minetest.register_craftitem(name, weapon_def)
 	end
 

@@ -1,190 +1,192 @@
 
---[[
-  || action.lua
-  || Useful actions for weapons.
-  ||
-  || Part of the Firearms Modpack for Minetest.
-  || Copyright (C) 2013 Diego Martínez <kaeza>
-  || See `LICENSE.txt' for details.
---]]
+firearms.action = { }
 
+local vnew = vector.new
+local vadd, vsub = vector.add, vector.subtract
+local vmul, vdiv = vector.multiply, vector.divide
 local random = math.random
+local abs, min, max = math.abs, math.min, math.max
 
---[[
-  | shoot
-  |
-  | Shoots the current weapon, using the ammo for the currently
-  | selected slot.
---]]
-firearms.action.shoot = {
-	description = "Shoot",
-	func = function(player, player_info, weapon_info)
-		local ammo_info
-		if weapon_info then
-			player_info.ammo_info = player_info.ammo_info or { }
-			ammo_info = (player_info.ammo_info and
-				player_info.ammo_info[player_info.current_weapon.name]
-			)
-		end
-		-- No ammo left in magazine; must reload.
-		if (not ammo_info) or (ammo_info.count == 0) then
-			if weapon_info.sounds.empty then
-				minetest.sound_play(weapon_info.sounds.empty, {pos=player:getpos()})
-			end
-			return
-		end
-		if player_info.shoot_cooldown <= 0 then
-			local player_pos = player:getpos()
-			local player_dir = player:get_look_dir()
-			if weapon_info.sounds.shoot then
-				minetest.sound_play(weapon_info.sounds.shoot, {pos=player:getpos()})
-			end
-			-- TODO: Calc this properly.
-			local muzzle_pos = { x=player_pos.x, y=player_pos.y, z=player_pos.z, } 
-			local spread = weapon_info.spread or 10
-			local yaw = player:get_look_yaw()
-			ammo_info.count = ammo_info.count - 1
-			muzzle_pos.y = muzzle_pos.y + 1.45
-			muzzle_pos.x = muzzle_pos.x + (math.sin(yaw) / 2)
-			muzzle_pos.z = muzzle_pos.z - (math.cos(yaw) / 2)
-			if firearms.hud then
-				firearms.hud.update_ammo_hud(player, player_info, ammo_info.count)
-			end
-			player_info.shoot_cooldown = (weapon_info.shoot_cooldown or 1)
-			player_pos.y = player_pos.y + 1.625
-			local pellets = (ammo_info.item_def.firearms.pellets or 1)
-			local damage = (ammo_info.item_def.firearms.damage or 0)
-			local player_name = player:get_player_name()
-			for n = 1, pellets do
-				local bullet_dir = {
-					x = player_dir.x + (random(-spread, spread) / 1000),
-					y = player_dir.y + (random(-spread, spread) / 1000),
-					z = player_dir.z + (random(-spread, spread) / 1000),
-				}
-				local ent = pureluaentity.add(player_pos, "firearms:bullet")
-				ent.player = player
-				ent.player_name = player_name
-				ent.player_info = player_info
-				ent.ammo_def = ammo_info.item_def
-				ent.damage = damage / pellets
-				ent.object:setvelocity({
-					x = bullet_dir.x * 20,
-					y = bullet_dir.y * 20,
-					z = bullet_dir.z * 20,
-				})
-				local v = random(100, 150)
-				local bullet_vel = {
-					x = bullet_dir.x * v,
-					y = bullet_dir.y * v,
-					z = bullet_dir.z * v,
-				}
-				ent.life = (weapon_info.range or 10) / 20
-				minetest.add_particle(
-					muzzle_pos,         -- pos
-					bullet_vel, -- velocity
-					{x=0, y=0, z=0},    -- acceleration
-					0.5,                -- expirationtime
-					2,                  -- size
-					false,              -- collisiondetection
-					"firearms_bullet.png", -- texture
-					player:get_player_name()
-				)
-			end
-		end
-	end,
-}
+local reg_nodes, get_node = minetest.registered_nodes, minetest.get_node
+local get_objects_inside_radius = minetest.get_objects_inside_radius
+local sound_play = minetest.sound_play
 
---[[
-  | reload
-  |
-  | Reloads the current weapon, using the ammo for the currently
-  | selected slot.
---]]
-firearms.action.reload = {
-	description = "Reload",
-	func = function(player, player_info, weapon_info)
-		if weapon_info then
-			local ammo_info = (player_info.ammo_info
-			              and player_info.ammo_info[player_info.current_weapon.name])
-			-- TODO: Add support for more than one slot.
-			local clipsize = (weapon_info.slots
-			                  and weapon_info.slots[1]
-			                  and weapon_info.slots[1].clipsize)
-			if not clipsize then
-				firearms.warning(("clipsize not defined for %s; cannot reload"):format(
-				                  player_info.current_weapon.name
-				                ))
-				return
-			end
-			if not ammo_info then
-				local item_def = firearms.ammo.registered[weapon_info.slots[1].ammo]
-				if not item_def then
-					firearms.warning(("bullet type %s is not registered"):format(
-						weapon_info.slots[1].ammo
-					))
-					return
-				end
-				ammo_info = {
-					count = 0,
-					item_def = item_def,
-				}
-				player_info.ammo_info = player_info.ammo_info or { }
-				player_info.ammo_info[player_info.current_weapon.name] = ammo_info
-			end
-			if ammo_info.count < clipsize then
-				local inv = player:get_inventory()
-				local count = firearms.count_items(inv, "main", ammo_info.item_def.name)
-				if count > 0 then
-					player_info.shoot_cooldown = weapon_info.reload_time or 3
-					if weapon_info.sounds.reload then
-						minetest.sound_play(weapon_info.sounds.reload, {pos=player:getpos()})
-					end
-					local needed = math.min(clipsize - ammo_info.count, count)
-					player_info.ammo_info = player_info.ammo_info or { }
-					player_info.ammo_info[player_info.current_weapon.name] =
-					  player_info.ammo_info[player_info.current_weapon.name] or
-					  ammo_info
-					ammo_info.count = ammo_info.count + needed
-					local stack = ItemStack({
-						name = ammo_info.item_def.name,
-						count = needed,
-					})
-					inv:remove_item("main", stack)
-					if firearms.hud then
-						firearms.hud.update_ammo_hud(player, player_info)
-					end
-				end
-			end
-		end
-	end,
-}
-
-function set_scope(player, player_info, weapon_info, flag)
-	if weapon_info and flag then
-		player:hud_set_flags({wielditem=false})
-		firearms.hud.set_player_overlay(player, weapon_info.hud.overlay)
-		firearms.set_player_fov(player, weapon_info.zoomed_fov or -100)
-	else
-		player:hud_set_flags({wielditem=true})
-		firearms.set_player_fov(player, weapon_info and weapon_info.fov or -100)
-		firearms.hud.set_player_overlay(player, nil)
-	end
-	player_info.zoomed = flag
+local function minmax(x, y)
+	return min(x, y), max(x, y)
 end
 
---[[
-  | toggle_scope
-  |
-  | Toggles on or off telescopic sights, and adjusts player
-  | FOV accordingly (if supported).
---]]
-firearms.action.toggle_scope = {
-	description = "Toggle Scope",
-	func = function(player, player_info, weapon_info)
-		set_scope(player, player_info, weapon_info, not player_info.zoomed)
+local function point_in_box(p, b1, b2)
+	local xmin, xmax = minmax(b1.x, b2.x)
+	local ymin, ymax = minmax(b1.y, b2.y)
+	local zmin, zmax = minmax(b1.z, b2.z)
+	local px, py, pz = p.x, p.y, p.z
+	return  px>=xmin and px<=xmax and
+			py>=ymin and py<=ymax and
+			pz>=zmin and pz<=zmax
+end
+
+local function get_obj_box_abs(obj)
+	local box
+	if obj:is_player() then
+		box = { -.5, -.5, -.5, .5, 1.5, .5 }
+	else
+		box = (obj:get_luaentity().collisionbox
+				or { -0.5,-0.5,-0.5, 0.5,0.5,0.5 })
+	end
+	local pos = obj:getpos()
+	local px, py, pz = pos.x, pos.y, pos.z
+	local x1, y1, z1, x2, y2, z2 = unpack(box)
+	return {x=x1+px, y=y1+py, z=z1+pz}, {x=x2+px, y=y2+py, z=z2+pz}
+end
+
+local function add_bullet_decal(plname, pos)
+	minetest.add_particle({
+		pos = pos,
+		velocity = { x=0, y=0, z=0 },
+		acceleration = { x=0, y=0, z=0 },
+		expirationtime = 5,
+		size = 5,
+		collisiondetection = false,
+		texture = "firearms_bullet_decal.png",
+		playername = plname,
+	})
+end
+
+local function add_node_break_particle(plname, pos, dir, node_def)
+	local tile = node_def.tiles and node_def.tiles[1]
+	if not tile then return end
+	minetest.add_particle({
+		pos = pos,
+		velocity = {
+			x = dir.x+(random()-.5),
+			y = dir.y+(random()-.5),
+			z = dir.z+(random()-.5),
+		},
+		acceleration = { x=0, y=-5, z=0 },
+		expirationtime = .5+random()*.5,
+		size = .5,
+		collisiondetection = true,
+		texture = tile,
+		playername = plname,
+	})
+end
+
+local RESOLUTION = .2
+
+local eye_offs = { x=0, y=1.625, z=0 }
+local function bullet_raycast(user, dir, dist, damage)
+	local plname = user:is_player() and user:get_player_name() or nil
+	local pos = vadd(user:getpos(), eye_offs)
+	local ld = vmul(dir, RESOLUTION)
+	for i = 1, dist/RESOLUTION do
+		local lastpos = pos
+		pos = vadd(pos, ld)
+		local node = get_node(pos)
+		local def = reg_nodes[node.name]
+		if def.walkable then
+			add_bullet_decal(plname, lastpos)
+			local d = vmul(ld, -1)
+			for i = 1, random(2, 5) do
+				add_node_break_particle(plname, lastpos, d, def)
+			end
+			return
+		else
+			local obj_hit
+			local obj_list = get_objects_inside_radius(pos, 3)
+			for _, obj in ipairs(obj_list) do
+				if obj ~= user then
+					local p1, p2 = get_obj_box_abs(obj)
+					if point_in_box(pos, p1, p2) then
+						local ev = (obj:is_player()
+								and "player_shot" or "object_shot")
+						firearms.event.trigger(ev, obj, user, pos, damage)
+						return
+					end
+				end
+			end
+		end
+	end
+end
+
+firearms.action.SHOOT = {
+	description = "Shoot",
+	func = function(player, weapon_stack, weapon_def)
+		local weapon_sounds = weapon_def.firearms.sounds or { }
+
+		local player_pos = player:getpos()
+		local player_dir = player:get_look_dir()
+		local player_inv = player:get_inventory()
+
+		local used = ItemStack(weapon_def.firearms.clip.ammo)
+		if not player_inv:contains_item("main", used) then
+			if weapon_sounds.empty then
+				sound_play(weapon_sounds.empty, { pos=player_posaaaaa })
+			end
+			return weapon_def.firearms.shoot_cooldown
+		end
+
+		player_inv:remove_item("main", used)
+
+		if weapon_sounds.shoot then
+			sound_play(weapon_sounds.shoot, { pos=player_pos })
+		end
+
+		local ammo_def = minetest.registered_items[weapon_def.firearms.clip.ammo].firearms
+
+		local muzzle_pos = vnew(player_pos)
+		local spread = weapon_def.firearms.spread or 10
+		local yaw = player:get_look_horizontal()
+		local pitch = player:get_look_vertical()
+
+		muzzle_pos.y = muzzle_pos.y + 1.45
+		muzzle_pos.x = muzzle_pos.x + (math.sin(yaw+math.pi/4) / 2)
+		muzzle_pos.z = muzzle_pos.z - (math.cos(yaw+math.pi/4) / 2)
+
+		local pellets = (ammo_def.pellets or 1)
+		for n = 1, pellets do
+			local bullet_dir = {
+				x = player_dir.x + (random(-spread, spread) / 1000),
+				y = player_dir.y + (random(-spread, spread) / 1000),
+				z = player_dir.z + (random(-spread, spread) / 1000),
+			}
+
+			bullet_raycast(player, bullet_dir,
+					weapon_def.firearms.range,
+					ammo_def.damage)
+
+			local bullet_vel = vmul(bullet_dir, random(100, 150))
+
+			-- Dummy visible bullet
+			minetest.add_particle({
+				pos = muzzle_pos,
+				velocity = bullet_vel,
+				acceleration = { x=0, y=0, z=0 },
+				expirationtime = 0.5,
+				size = 2,
+				collisiondetection = false,
+				texture = "firearms_bullet.png",
+				playername = player:get_player_name(),
+			})
+		end
+		return weapon_def.firearms.shoot_cooldown
 	end,
 }
 
-firearms.event.register("weapon_change", function(player, player_info, weapon_info)
-	set_scope(player, player_info, weapon_info, false)
+firearms.action.TOGGLE_SCOPE = {
+	description = "Toggle Scope",
+	func = function(weapon, player)
+		-- TODO
+	end,
+}
+
+firearms.event.register("player_shot", function(player, source, pos, damage)
+	player:set_hp(player:get_hp() - damage)
+end)
+
+firearms.event.register("object_shot", function(object, source, pos, damage)
+	local e = object:get_luaentity()
+	if e and e.name ~= "__builtin:item" then
+		--object:punch(source, 0)
+		object:set_hp(object:get_hp() - damage)
+	end
 end)

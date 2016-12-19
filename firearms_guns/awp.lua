@@ -2,10 +2,10 @@
 firearms.weapon.register(":firearms:awp", {
 	description = "AWP",
 	mesh = "firearms_awp.obj",
+	wield_scale = { x=2, y=2, z=2 },
 	firearms = {
 		--type = "sniper_rifle",
-		type = "sniper_rifle",
-		-- TODO: Add proper crosshair.
+		weapon_type = "sniper_rifle",
 		hud = {
 			crosshairs = {
 				{ image="firearms_crosshair_sniper_scope_reticule.png", scale={x=1, y=1} },
@@ -13,7 +13,10 @@ firearms.weapon.register(":firearms:awp", {
 			overlay = "firearms_crosshair_sniper_scope.png",
 		},
 		zoomed_fov = -25,
-		slots = { { ammo="firearms:bullet_762mm", clipsize=5, }, },
+		clip = {
+			ammo = "firearms:bullet_762mm",
+			size = 5,
+		},
 		range = 50,
 		spread = 5,
 		shoot_cooldown = 2.5,

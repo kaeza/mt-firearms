@@ -18,16 +18,12 @@ firearms = {
 	ammo = { },
 }
 
-dofile(MP.."/pureluaentity.lua")
-
 dofile(MP.."/config.lua")
 dofile(MP.."/core.lua")
 dofile(MP.."/event.lua")
 dofile(MP.."/action.lua")
 dofile(MP.."/weapon.lua")
 dofile(MP.."/ammo.lua")
-
-dofile(MP.."/bullet.lua")
 
 dofile(MP.."/chatcommands.lua")
 

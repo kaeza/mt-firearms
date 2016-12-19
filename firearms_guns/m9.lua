@@ -2,9 +2,12 @@
 firearms.weapon.register(":firearms:m9", {
 	description = "M9",
 	firearms = {
-		type = "pistol",
+		weapon_type = "pistol",
 		hud = { crosshairs = { { image="firearms_crosshair_pistol.png", } } },
-		slots = { { ammo="firearms:bullet_45", clipsize=10, }, },
+		clip = {
+			ammo = "firearms:bullet_45",
+			size = 10,
+		},
 		range = 20,
 		spread = 20,
 		shoot_cooldown = 0.5,
