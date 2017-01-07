@@ -4,7 +4,7 @@ firearms.action = { }
 local vnew = vector.new
 local vadd, vsub = vector.add, vector.subtract
 local vmul, vdiv = vector.multiply, vector.divide
-local random = math.random
+local random, floor = math.random, math.floor
 local abs, min, max = math.abs, math.min, math.max
 
 local reg_nodes, get_node = minetest.registered_nodes, minetest.get_node
@@ -25,18 +25,48 @@ local function point_in_box(p, b1, b2)
 			pz>=zmin and pz<=zmax
 end
 
+local fullbox = { -0.5,-0.5,-0.5, 0.5,0.5,0.5 }
+
 local function get_obj_box_abs(obj)
 	local box
 	if obj:is_player() then
 		box = { -.5, -.5, -.5, .5, 1.5, .5 }
 	else
 		box = (obj:get_luaentity().collisionbox
-				or { -0.5,-0.5,-0.5, 0.5,0.5,0.5 })
+				or fullbox)
 	end
 	local pos = obj:getpos()
 	local px, py, pz = pos.x, pos.y, pos.z
 	local x1, y1, z1, x2, y2, z2 = unpack(box)
 	return {x=x1+px, y=y1+py, z=z1+pz}, {x=x2+px, y=y2+py, z=z2+pz}
+end
+
+local cached_boxes = { }
+
+local function point_in_node(pos, def)
+	local boxes = cached_boxes[def.name]
+	if not boxes then
+		if def.drawtype == "nodebox" then
+			boxes = def.node_box.fixed or { fullbox }
+			if type(boxes[1]) == "number" then
+				boxes = { boxes }
+			end
+		else
+			boxes = { fullbox }
+		end
+		cached_boxes[def.name] = boxes
+	end
+	print(dump(boxes))
+	local px, py, pz = pos.x, pos.y, pos.z
+	local nx, ny, nz = floor(px+.5), floor(py+.5), floor(pz+.5)
+	for i, box in ipairs(boxes) do
+		local x1, y1, z1, x2, y2, z2 = unpack(box)
+		local b1 = {x=x1+nx, y=y1+ny, z=z1+nz}
+		local b2 = {x=x2+nx, y=y2+ny, z=z2+nz}
+		if point_in_box(pos, b1, b2) then
+			return true
+		end
+	end
 end
 
 local function add_bullet_decal(plname, pos)
@@ -83,7 +113,7 @@ local function bullet_raycast(user, dir, dist, damage)
 		pos = vadd(pos, ld)
 		local node = get_node(pos)
 		local def = reg_nodes[node.name]
-		if def.walkable then
+		if def.walkable and point_in_node(pos, def) then
 			add_bullet_decal(plname, lastpos)
 			local d = vmul(ld, -1)
 			for i = 1, random(2, 5) do
