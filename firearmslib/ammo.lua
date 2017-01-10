@@ -25,6 +25,8 @@ function firearms.ammo.register(name, ammo_def)
 	ammo_def.firearms = ammo_def.firearms or { }
 	ammo_def.firearms.type = "ammo"
 
+	ammo_def.stack_max = ammo_def.stack_max or 1000
+
 	local name_noprefix = ((name:sub(1, 1) ~= ":") and name or name:sub(2))
 	registered[name_noprefix] = ammo_def
 	minetest.register_craftitem(name, ammo_def)
