@@ -161,7 +161,8 @@ firearms.action.SHOOT = {
 			sound_play(weapon_sounds.shoot, { pos=player_pos })
 		end
 
-		local ammo_def = minetest.registered_items[weapon_def.firearms.clip.ammo].firearms
+		local reg_items = minetest.registered_items
+		local ammo_def = reg_items[weapon_def.firearms.clip.ammo]
 
 		local muzzle_pos = vnew(player_pos)
 		local spread = weapon_def.firearms.spread or 10
@@ -172,7 +173,7 @@ firearms.action.SHOOT = {
 		muzzle_pos.x = muzzle_pos.x + (math.sin(yaw+math.pi/4) / 2)
 		muzzle_pos.z = muzzle_pos.z - (math.cos(yaw+math.pi/4) / 2)
 
-		local pellets = (ammo_def.pellets or 1)
+		local pellets = (ammo_def.firearms.pellets or 1)
 		for n = 1, pellets do
 			local bullet_dir = {
 				x = player_dir.x + (random(-spread, spread) / 1000),
@@ -182,7 +183,7 @@ firearms.action.SHOOT = {
 
 			bullet_raycast(player, bullet_dir,
 					weapon_def.firearms.range,
-					ammo_def.damage)
+					ammo_def.firearms.damage)
 
 			local bullet_vel = vmul(bullet_dir, random(100, 150))
 
