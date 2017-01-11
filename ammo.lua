@@ -19,7 +19,7 @@ function firearms.ammo.register(name, ammo_def)
 	ammo_def.damage = ammo_def.damage or 0
 
 	if not ammo_def.inventory_image then
-		ammo_def.inventory_image = itemname_prefix.."_inv.png"
+		ammo_def.inventory_image = itemname_prefix..".png"
 	end
 
 	ammo_def.firearms = ammo_def.firearms or { }

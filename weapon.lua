@@ -25,7 +25,7 @@ function firearms.weapon.register(name, weapon_def)
 	weapon_def.range = weapon_def.range or 0
 
 	weapon_def.inventory_image =
-			weapon_def.inventory_image or itemname_prefix.."_inv.png"
+			weapon_def.inventory_image or itemname_prefix..".png"
 
 	weapon_def.firearms = weapon_def.firearms or { }
 	weapon_def.firearms.type = "weapon"
@@ -42,10 +42,6 @@ function firearms.weapon.register(name, weapon_def)
 	if not weapon_def.on_use then
 		weapon_def.on_use = function() end
 	end
-
-	weapon_def.firearms.hud = weapon_def.firearms.hud or { }
-	weapon_def.firearms.hud.image = (weapon_def.firearms.hud.image
-	                                 or itemname_prefix.."_hud.png")
 
 	weapon_def.firearms.sounds = weapon_def.firearms.sounds or { }
 	weapon_def.firearms.sounds.shoot  = (weapon_def.firearms.sounds.shoot

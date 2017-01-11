@@ -8,8 +8,9 @@
   || See `LICENSE.txt' for details.
 --]]
 
-local callbacks = { }
+firearms.event = { }
 
+local callbacks = { }
 
 --[[
   | register(eventtype, callback)

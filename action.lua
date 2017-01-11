@@ -56,7 +56,6 @@ local function point_in_node(pos, def)
 		end
 		cached_boxes[def.name] = boxes
 	end
-	print(dump(boxes))
 	local px, py, pz = pos.x, pos.y, pos.z
 	local nx, ny, nz = floor(px+.5), floor(py+.5), floor(pz+.5)
 	for i, box in ipairs(boxes) do

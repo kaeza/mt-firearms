@@ -1,5 +1,5 @@
 
-local MP = minetest.get_modpath("firearms_guns")
+local MP = minetest.get_modpath("firearms").."/guns"
 
 dofile(MP.."/m9.lua")
 dofile(MP.."/m3.lua")

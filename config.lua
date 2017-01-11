@@ -8,6 +8,8 @@
   || See `LICENSE.txt' for details.
 --]]
 
+firearms.config = { }
+
 local conf_name = minetest.get_worldpath().."/firearms.conf"
 local conf = Settings(conf_name)
 local conf_dirty = false
@@ -283,19 +285,3 @@ function firearms.config.save()
 		minetest.log("warning", ("error writing config file to `%s'"):format(conf_name))
 	end
 end
-
-local function set_default(name, value)
-	if not firearms.config.get(name) then
-		firearms.config.set(name, tostring(value))
-	end
-end
-
-set_default("particle_shells", "self")
-set_default("particle_fire", "self")
-
-set_default("weapons", "m9,m3,m4,awp")
-set_default("items", "nvg,medkit")
-
-set_default("weapon_types", "pistol,shotgun,assault_rifle,sniper_rifle")
-
-set_default("mesh_wieldview", "true")
